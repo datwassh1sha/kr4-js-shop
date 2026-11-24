@@ -6,7 +6,6 @@
     <title>Магазин моделей Hot Wheels Deals</title>
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/responsive.css" />
-    <script src="js/main.js" defer></script>
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Магазин моделей Hot Wheels Deals" />
     <meta
@@ -205,7 +204,7 @@
             <button
               class="button product-card__button"
               type="button"
-              data-product="RWB Porcshe 930"
+              data-product="RWB Porsche 930"
             >
               Заказать
             </button>
@@ -253,7 +252,7 @@
             <button
               class="button product-card__button"
               type="button"
-              data-product="Porcshe 917KH"
+              data-product="Porsche 917KH Gulf"
             >
               Заказать
             </button>
@@ -300,7 +299,7 @@
             <button
               class="button product-card__button"
               type="button"
-              data-product="Porcshe Carrera GT"
+              data-product="Porsche Carrera GT"
             >
               Заказать
             </button>
@@ -590,6 +589,9 @@
       >
         <input id="selected-product" name="selected-product" type="hidden" />
 
+        <!-- Название товара, из карточки которого открыли окно -->
+        <p class="order-dialog__product" id="selected-product-name"></p>
+
         <div class="form-field">
           <label for="order-name">Имя</label>
           <input
@@ -599,6 +601,7 @@
             placeholder="Введите ваше имя"
             minlength="2"
             autocomplete="given-name"
+            data-error-message="Укажите имя, чтобы мы знали, к кому обращаться."
             required
           />
         </div>
@@ -611,6 +614,7 @@
             type="email"
             placeholder="example@mail.ru"
             autocomplete="email"
+            data-error-message="Проверьте адрес: он нужен для ответа на заявку."
             required
           />
         </div>
@@ -624,6 +628,8 @@
             inputmode="tel"
             placeholder="+7 (900) 000-00-00"
             pattern="^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$"
+            data-pattern-message="Телефон в формате +7 (900) 000-00-00."
+            autocomplete="tel"
             required
           />
           <small>Формат: +7 (900) 000-00-00</small>
@@ -666,6 +672,15 @@
           </label>
         </div>
 
+        <!-- Сообщения формы выводятся текстом, без alert() -->
+        <p
+          class="message"
+          id="order-form-message"
+          role="alert"
+          aria-live="assertive"
+          hidden
+        ></p>
+
         <div class="form-actions">
           <button type="button" id="close-order-dialog">Закрыть</button>
           <button type="submit">Отправить заявку</button>
@@ -673,10 +688,12 @@
       </form>
     </dialog>
 
-    <p class="success-message" id="success-message" hidden>
-      Форма успешно отправлена!
-    </p>
+    <p class="success-message" id="success-message" hidden></p>
+    <script src="js/dom.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/validation.js"></script>
     <script src="js/cart-counter.js"></script>
     <script src="js/events.js"></script>
+    <script src="js/main.js"></script>
   </body>
 </html>

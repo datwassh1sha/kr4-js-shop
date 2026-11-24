@@ -1,114 +1,118 @@
-// ==========================================
-// Модальное окно предзаказа
-// ==========================================
+/*
+  Главная страница: модальное окно предзаказа и форма заявки.
 
-// Раньше окно открывал Bootstrap, теперь управляем им сами.
-const preorderDialog = document.getElementById('preorder-modal');
-const preorderOpenButton = document.getElementById('preorder-open');
-const preorderCloseButton = document.getElementById('preorder-close');
+  Оба окна построены на нативном <dialog>, поэтому браузер сам удерживает
+  фокус внутри окна и закрывает его по Escape. Сообщения об ошибках
+  и об успешной отправке выводятся текстом на странице, без alert().
+*/
 
-// Кнопки, закрывающие окно предзаказа.
-const preorderDismissButtons = document.querySelectorAll('[data-preorder-close]');
+(() => {
+  /*
+    Окно предзаказа.
+  */
+  const preorderDialog = document.querySelector("#preorder-modal");
+  const preorderOpenButton = document.querySelector("#preorder-open");
+  const preorderCloseButton = document.querySelector("#preorder-close");
+  const preorderDismissButtons = document.querySelectorAll("[data-preorder-close]");
 
-// Открываем окно предзаказа.
-preorderOpenButton.addEventListener('click', () => {
-  preorderDialog.showModal();
-});
-
-// Закрываем окно крестиком.
-preorderCloseButton.addEventListener('click', () => {
-  preorderDialog.close();
-});
-
-// Закрываем окно кнопками в подвале.
-preorderDismissButtons.forEach((button) => {
-  button.addEventListener('click', () => {
-    preorderDialog.close();
-  });
-});
-
-// Закрываем окно по нажатию на затемнённую область вокруг него.
-preorderDialog.addEventListener('click', (event) => {
-  if (event.target === preorderDialog) {
-    preorderDialog.close();
-  }
-});
-
-// ==========================================
-// Форма заявки
-// ==========================================
-
-// Получаем модальное окно по id.
-const orderDialog = document.getElementById('order-dialog');
-
-// Получаем все кнопки заказа в карточках товаров.
-const orderButtons = document.querySelectorAll('.product-card__button');
-
-// Получаем кнопку закрытия модального окна.
-const closeDialogButton = document.getElementById('close-order-dialog');
-
-// Получаем скрытое поле, в которое будет записан выбранный товар.
-const selectedProductInput = document.getElementById('selected-product');
-
-// Перебираем все кнопки «Заказать».
-orderButtons.forEach((button) => {
-  button.addEventListener('click', () => {
-    // Получаем название товара из data-атрибута.
-    const productName = button.dataset.product;
-
-    // Записываем название товара в скрытое поле формы.
-    selectedProductInput.value = productName;
-
-    // Открываем модальное окно.
-    orderDialog.showModal();
-  });
-});
-
-// Закрываем модальное окно по кнопке «Закрыть».
-closeDialogButton.addEventListener('click', () => {
-  orderDialog.close();
-});
-
-// Получаем форму заявки.
-const orderForm = document.getElementById('order-form');
-
-// Получаем сообщение об успешной отправке.
-const successMessage = document.getElementById('success-message');
-
-// Обрабатываем отправку формы.
-orderForm.addEventListener('submit', (event) => {
-  // Отменяем стандартную отправку формы,
-  // потому что backend пока не подключён.
-  event.preventDefault();
-
-  // Сбрасываем предыдущие признаки ошибок.
-  const formElements = Array.from(orderForm.elements);
-
-  formElements.forEach((element) => {
-    if (element.willValidate) {
-      element.removeAttribute('aria-invalid');
-    }
-  });
-
-  // Проверяем встроенные HTML-ограничения формы.
-  if (!orderForm.checkValidity()) {
-    formElements.forEach((element) => {
-      if (element.willValidate && !element.checkValidity()) {
-        element.setAttribute('aria-invalid', 'true');
-      }
+  if (preorderDialog && preorderOpenButton) {
+    preorderOpenButton.addEventListener("click", () => {
+      preorderDialog.showModal();
     });
 
-    // Показываем стандартные сообщения браузера.
-    orderForm.reportValidity();
+    if (preorderCloseButton) {
+      preorderCloseButton.addEventListener("click", () => {
+        preorderDialog.close();
+      });
+    }
+
+    preorderDismissButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        preorderDialog.close();
+      });
+    });
+
+    //Клик по затемнённой области вокруг окна тоже закрывает его.
+    preorderDialog.addEventListener("click", (event) => {
+      if (event.target === preorderDialog) {
+        preorderDialog.close();
+      }
+    });
+  }
+
+  /*
+    Окно заявки на товар.
+  */
+  const orderDialog = document.querySelector("#order-dialog");
+  const orderForm = document.querySelector("#order-form");
+  const orderButtons = document.querySelectorAll(".product-card__button");
+  const closeDialogButton = document.querySelector("#close-order-dialog");
+  const selectedProductInput = document.querySelector("#selected-product");
+  const selectedProductHint = document.querySelector("#selected-product-name");
+  const formMessage = document.querySelector("#order-form-message");
+
+  if (!orderDialog || !orderForm) {
     return;
   }
 
-  // Показываем сообщение об успешной отправке.
-  successMessage.hidden = false;
+  const validation = FormValidation.initForm(orderForm);
 
-  // Очищаем форму.
-  orderForm.reset();
+  /*
+    Кнопки «Заказать» в карточках главной страницы.
+  */
+  orderButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const productName = button.dataset.product || "";
 
-  // Закрываем модальное окно.
-  orderDialog.close();
-});
+      selectedProductInput.value = productName;
+      selectedProductHint.textContent = productName;
+
+      //Новое открытие окна не должно показывать прошлые сообщения.
+      Dom.setMessage(formMessage, "", "info");
+      validation.clear();
+
+      orderDialog.showModal();
+    });
+  });
+
+  if (closeDialogButton) {
+    closeDialogButton.addEventListener("click", () => {
+      orderDialog.close();
+    });
+  }
+
+  /*
+    Отправка формы: сначала проверка полей, затем сообщение об успехе.
+    Серверной части в учебном проекте нет, поэтому event.preventDefault().
+  */
+  orderForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    Dom.setMessage(formMessage, "", "info");
+
+    if (!validation.validate()) {
+      Dom.setMessage(
+        formMessage,
+        "Проверьте выделенные поля и отправьте заявку ещё раз.",
+        "error"
+      );
+      return;
+    }
+
+    const name = orderForm.querySelector("#order-name").value.trim();
+
+    orderDialog.close();
+    orderForm.reset();
+    validation.clear();
+
+    const successMessage = document.querySelector("#success-message");
+
+    Dom.setMessage(
+      successMessage,
+      `${name}, заявка отправлена! Свяжемся с вами в рабочее время.`,
+      "success"
+    );
+
+    successMessage.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+})();

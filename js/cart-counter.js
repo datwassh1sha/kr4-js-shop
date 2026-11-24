@@ -1,18 +1,34 @@
-function updateCartCounter() {
-  const cartCount = document.querySelector("#cart-count");
+/*
+  Счётчик товаров в шапке сайта.
 
-  if (!cartCount) {
+  Подключается на всех страницах. Число берётся из корзины через модуль
+  js/cart.js, поэтому формат хранения описан в одном месте.
+*/
+
+(() => {
+  const counter = document.querySelector("#cart-count");
+
+  if (!counter) {
     return;
   }
 
-  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  function renderCounter() {
+    const total = Cart.getTotalQuantity();
 
-  const totalQuantity = cart.reduce((sum, item) => {
-    return sum + item.quantity;
-  }, 0);
+    counter.textContent = total;
+    //Пустая корзина — счётчик прячется, чтобы не мешать навигации.
+    counter.classList.toggle("cart-badge--empty", total === 0);
+  }
 
-  cartCount.textContent = totalQuantity;
-}
+  renderCounter();
 
-updateCartCounter();
-window.addEventListener("cartUpdated", updateCartCounter);
+  //Любое изменение корзины обновляет счётчик.
+  window.addEventListener(Cart.UPDATE_EVENT, renderCounter);
+
+  //Изменения в другой вкладке браузера тоже учитываются.
+  window.addEventListener("storage", (event) => {
+    if (event.key === "cart") {
+      renderCounter();
+    }
+  });
+})();

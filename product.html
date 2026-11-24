@@ -111,7 +111,14 @@
               </a>
             </div>
 
-            <p id="cart-message" role="status" aria-live="polite"></p>
+            <!-- Сообщение о добавлении в корзину -->
+            <p
+              class="message"
+              id="cart-message"
+              role="status"
+              aria-live="polite"
+              hidden
+            ></p>
 
             <!-- Доставка и оплата -->
             <div class="product-services">
@@ -213,8 +220,10 @@
       <p>Дисциплина: Фронтенд и бэкенд разработка</p>
     </footer>
 
+    <script src="js/dom.js"></script>
+    <script src="js/cart.js"></script>
     <script src="js/products.js"></script>
-    <script src="js/product.js"></script>
     <script src="js/cart-counter.js"></script>
+    <script src="js/product.js"></script>
   </body>
 </html>

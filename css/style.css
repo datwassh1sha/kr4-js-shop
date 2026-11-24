@@ -1484,8 +1484,88 @@ main > .section p {
   outline-offset: 3px;
 }
 
+/*
+  Поле сортировки оформлено как остальные поля фильтров.
+*/
+.filters-form__select {
+  cursor: pointer;
+}
+
+.filters-form__select option {
+  color: var(--color-text);
+  background-color: var(--color-surface-accent);
+}
+
+/*
+  Кнопки под фильтрами: основная и сброс.
+*/
+.filters-form__actions {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.filters-form__reset {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: var(--color-muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.filters-form__reset:hover {
+  border-color: #5a5a5a;
+  color: var(--color-text);
+}
+
+.filters-form__reset:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
 /* --------------------------------------------------------------------------
-   13.4. Карточки каталога
+   13.4. Результаты поиска и пустое состояние
+   -------------------------------------------------------------------------- */
+
+/*
+  Строка «Найдено 3 товара из 4».
+  min-height резервирует место, чтобы список не прыгал при вводе запроса.
+*/
+.catalog-products__count {
+  min-height: 1.5em;
+  margin: 0 0 var(--space-md);
+  color: var(--color-muted);
+  font-size: 0.95rem;
+}
+
+.catalog-empty {
+  padding: var(--space-xl);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  text-align: center;
+}
+
+.catalog-empty h3 {
+  margin: 0 0 var(--space-sm);
+  font-size: 1.25rem;
+}
+
+.catalog-empty p {
+  max-width: 46ch;
+  margin: 0 auto var(--space-lg);
+  color: var(--color-muted);
+}
+
+/* --------------------------------------------------------------------------
+   13.5. Карточки каталога
    -------------------------------------------------------------------------- */
 
 .catalog-products .product-card {
@@ -1673,22 +1753,11 @@ main > .section p {
   border-color: rgba(230, 36, 41, 0.3);
 }
 
-#cart-message:not(:empty) {
-  margin-top: var(--space-md);
-  padding: var(--space-md);
-  color: var(--color-success);
-  background: var(--color-success-bg);
-  border: 1px solid var(--color-success);
-  border-radius: var(--radius-md);
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
 /*
-  Пустой блок не занимает место на странице.
+  Уведомление о добавлении в корзину оформлено общим классом .message.
 */
-#cart-message:empty {
-  display: none;
+#cart-message {
+  font-size: 0.95rem;
 }
 
 /* --------------------------------------------------------------------------
@@ -2158,15 +2227,6 @@ main > .section:first-of-type li {
   line-height: 1.6;
 }
 
-#order-message:not(:empty) {
-  margin-top: var(--space-lg);
-  padding: var(--space-md);
-  color: var(--color-success);
-  background: var(--color-success-bg);
-  border: 1px solid var(--color-success);
-  border-radius: var(--radius-md);
-}
-
 
 /* ==========================================================================
    17. Модальное окно формы заявки
@@ -2197,9 +2257,16 @@ main > .section:first-of-type li {
 .form-field textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #cccccc;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   font: inherit;
+}
+
+.form-field select option {
+  color: var(--color-text);
+  background-color: var(--color-surface-accent);
 }
 
 /*
@@ -2222,7 +2289,20 @@ main > .section:first-of-type li {
 .form-field small {
   display: block;
   margin-top: 4px;
-  color: #666666;
+  color: var(--color-muted);
+}
+
+/*
+  Текст ошибки под полем.
+  Элемент создаёт js/validation.js и связывает его с полем
+  через aria-describedby.
+*/
+.form-field__error {
+  margin: 6px 0 0;
+  color: #ff8a8d;
+  font-family: Arial, sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.4;
 }
 
 .form-field input:focus-visible,
@@ -2239,12 +2319,42 @@ main > .section:first-of-type li {
   margin-top: 20px;
 }
 
+/*
+  Окно заявки оформлено в тёмной теме проекта.
+*/
+.order-dialog {
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+/*
+  Название товара, из карточки которого открыли окно.
+*/
+.order-dialog__product {
+  margin: 0 0 var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-left: 3px solid var(--color-primary);
+  background-color: var(--color-surface-accent);
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+/*
+  Тексты ошибок внутри окна заявки.
+*/
+.order-dialog .form-field__error {
+  margin-top: 6px;
+}
+
 .success-message {
   max-width: var(--container-width);
   margin: 24px auto;
   padding: var(--space-md);
-  border-left: 4px solid #168a2f;
-  background-color: #eefaf0;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--color-success);
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
 }
 
 
@@ -2255,9 +2365,57 @@ main > .section:first-of-type li {
 /*
   Подсветка ошибочных полей формы.
   Атрибут aria-invalid проставляет JavaScript при проверке формы.
+  Правило для :focus добавлено отдельно: у полей с фокусом своя рамка,
+  и без него подсветка ошибки проигрывала бы по специфичности.
 */
-[aria-invalid="true"] {
-  border-color: #b00020;
+[aria-invalid="true"],
+[aria-invalid="true"]:focus {
+  border-color: #ff7377;
+  box-shadow: 0 0 0 0.15rem rgb(255 115 119 / 18%);
+}
+
+/*
+  Блоки сообщений: информация, успех, ошибка.
+  Текст всегда выводится через textContent, класс задаёт только оформление.
+*/
+.message {
+  margin: var(--space-md) 0 0;
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.message--info {
+  border-color: var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-muted);
+}
+
+.message--success {
+  border-color: var(--color-success);
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.message--error {
+  border-color: #ff7377;
+  background-color: rgba(230, 36, 41, 0.12);
+  color: #ff9a9c;
+}
+
+/*
+  Пустой счётчик корзины не отвлекает от навигации.
+*/
+.catalog-products .message,
+.product-info .message {
+  margin-top: var(--space-md);
+}
+
+.cart-badge--empty {
+  background-color: var(--color-surface-accent);
+  color: var(--color-muted);
 }
 
 /*
