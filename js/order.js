@@ -1,176 +1,165 @@
+/*
+  Страница корзины: список позиций, итог, очистка и оформление заказа.
 
-const cartItems = document.querySelector("#cart-items");
-const cartEmpty = document.querySelector("#cart-empty");
-const cartSummary = document.querySelector("#cart-summary");
-const cartTotal = document.querySelector("#cart-total");
-const clearCartButton = document.querySelector("#clear-cart");
+  Позиции не прописаны в HTML — они собираются из корзины в localStorage
+  через createElement и append. Все тексты (названия, суммы, сообщения)
+  выводятся через textContent.
+*/
 
-// Получаем корзину из localStorage
-function getCart() {
-  return JSON.parse(localStorage.getItem("cart")) || [];
-}
+(() => {
+  const cartList = document.querySelector("#cart-items");
 
-// Сохраняем корзину
-function saveCart(cart) {
-  localStorage.setItem("cart", JSON.stringify(cart));
-}
+  //Модуль подключается только на странице корзины.
+  if (!cartList) {
+    return;
+  }
 
-// Отрисовываем товары
-function renderCart() {
-  const cart = getCart();
+  const cartEmpty = document.querySelector("#cart-empty");
+  const cartSummary = document.querySelector("#cart-summary");
+  const cartTotal = document.querySelector("#cart-total");
+  const clearCartButton = document.querySelector("#clear-cart");
+  const orderForm = document.querySelector("#order-form");
+  const orderMessage = document.querySelector("#order-message");
 
-  cartItems.replaceChildren();
+  /*
+    Строка с единицей: стоимость одной позиции.
+  */
+  function createCartItem(item) {
+    const total = item.price * item.quantity;
 
-  let total = 0;
+    const cartItem = Dom.create("article", "cart-item");
 
-  cart.forEach((item) => {
-    const itemTotal = item.price * item.quantity;
-    total += itemTotal;
-
-    // Позиция корзины — собственный компонент вместо Bootstrap-карточки.
-    const cartItem = document.createElement("article");
-    cartItem.className = "cart-item";
-
-    const image = document.createElement("img");
+    const image = Dom.create("img", "cart-item__image");
     image.src = item.image;
     image.alt = item.title;
-    image.className = "cart-item__image";
+    image.loading = "lazy";
+    image.decoding = "async";
 
-    const info = document.createElement("div");
-    info.className = "cart-item__info";
+    const info = Dom.create("div", "cart-item__info");
+    info.append(
+      Dom.create("h2", "cart-item__title", item.title),
+      Dom.create("p", "cart-item__unit-price", `${item.price} ₽ за штуку`)
+    );
 
-    const title = document.createElement("h2");
-    title.className = "cart-item__title";
-    title.textContent = item.title;
+    const quantityColumn = Dom.create("div", "cart-item__quantity");
 
-    const price = document.createElement("p");
-    price.className = "cart-item__unit-price";
-    price.textContent = `${item.price} ₽ за штуку`;
-
-    info.append(title, price);
-
-    const quantityColumn = document.createElement("div");
-    quantityColumn.className = "cart-item__quantity";
-
-    const decreaseButton = document.createElement("button");
-    decreaseButton.className = "button button--icon";
+    const decreaseButton = Dom.create(
+      "button",
+      "button button--icon",
+      "−"
+    );
     decreaseButton.type = "button";
-    decreaseButton.textContent = "−";
     decreaseButton.setAttribute("aria-label", `Уменьшить количество: ${item.title}`);
 
-    const quantity = document.createElement("span");
-    quantity.className = "cart-item__count";
-    quantity.textContent = item.quantity;
+    const quantity = Dom.create("span", "cart-item__count", item.quantity);
 
-    const increaseButton = document.createElement("button");
-    increaseButton.className = "button button--icon";
+    const increaseButton = Dom.create("button", "button button--icon", "+");
     increaseButton.type = "button";
-    increaseButton.textContent = "+";
     increaseButton.setAttribute("aria-label", `Увеличить количество: ${item.title}`);
 
     decreaseButton.addEventListener("click", () => {
-      const updatedCart = getCart();
-      const product = updatedCart.find((product) => product.id === item.id);
-
-      if (product.quantity > 1) {
-        product.quantity -= 1;
-      } else {
-        const index = updatedCart.findIndex(
-          (product) => product.id === item.id
-        );
-        updatedCart.splice(index, 1);
-      }
-
-      saveCart(updatedCart);
-      renderCart();
+      Cart.changeQuantity(item.id, -1);
     });
 
     increaseButton.addEventListener("click", () => {
-      const updatedCart = getCart();
-      const product = updatedCart.find((product) => product.id === item.id);
-
-      product.quantity += 1;
-
-      saveCart(updatedCart);
-      renderCart();
+      Cart.changeQuantity(item.id, 1);
     });
 
     quantityColumn.append(decreaseButton, quantity, increaseButton);
 
-    const totalColumn = document.createElement("div");
-    totalColumn.className = "cart-item__total";
-
-    const itemPrice = document.createElement("p");
-    itemPrice.className = "cart-item__sum";
-    itemPrice.textContent = `${itemTotal} ₽`;
-
-    const removeButton = document.createElement("button");
-    removeButton.className = "button button--danger-outline";
-    removeButton.type = "button";
-    removeButton.textContent = "Удалить";
-    removeButton.setAttribute("aria-label", `Удалить из корзины: ${item.title}`);
-
-    removeButton.addEventListener("click", () => {
-      const updatedCart = getCart().filter(
-        (product) => product.id !== item.id
-      );
-
-      saveCart(updatedCart);
-      renderCart();
-    });
-
-    totalColumn.append(itemPrice, removeButton);
+    const totalColumn = Dom.create("div", "cart-item__total");
+    totalColumn.append(
+      Dom.create("p", "cart-item__sum", Dom.formatPrice(total)),
+      createRemoveButton(item)
+    );
 
     cartItem.append(image, info, quantityColumn, totalColumn);
 
-    cartItems.append(cartItem);
+    return cartItem;
+  }
+
+  /*
+    Кнопка удаления одной позиции.
+  */
+  function createRemoveButton(item) {
+    const button = Dom.create("button", "button button--danger-outline", "Удалить");
+    button.type = "button";
+    button.setAttribute("aria-label", `Удалить из корзины: ${item.title}`);
+
+    button.addEventListener("click", () => {
+      Cart.remove(item.id);
+    });
+
+    return button;
+  }
+
+  /*
+    Перечисляет позиции и пересчитает итог.
+  */
+  function renderCart() {
+    const cart = Cart.read();
+
+    Dom.clear(cartList);
+
+    cart.forEach((item) => {
+      cartList.append(createCartItem(item));
+    });
+
+    //Знак рубля стоит в разметке рядом с числом, поэтому выводим только сумму.
+    cartTotal.textContent = Cart.getTotalPrice().toLocaleString("ru-RU");
+    cartEmpty.hidden = cart.length > 0;
+    cartSummary.hidden = cart.length === 0;
+  }
+
+  clearCartButton.addEventListener("click", () => {
+    Cart.clear();
+    Dom.setMessage(orderMessage, "", "info");
   });
 
-  // Обновляем итоговую сумму и состояние корзины
-  cartTotal.textContent = total.toLocaleString("ru-RU");
-  cartEmpty.hidden = cart.length > 0;
-  cartSummary.hidden = cart.length === 0;
-}
+  //Перерисовываем корзину при любом её изменении (в этой или другой вкладке).
+  window.addEventListener(Cart.UPDATE_EVENT, renderCart);
+  window.addEventListener("storage", renderCart);
 
-// Очищаем корзину целиком
-clearCartButton.addEventListener("click", () => {
-  saveCart([]);
+  /*
+    Валидация и отправка формы заказа.
+  */
+  const validation = FormValidation.initForm(orderForm);
+
+  orderForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    //Сбрасываем предыдущие сообщения.
+    Dom.setMessage(orderMessage, "", "info");
+
+    //Если корзина пуста, ошибок полей не задано — сообщаем прямо здесь.
+    if (Cart.read().length === 0) {
+      Dom.setMessage(orderMessage, "Добавьте товары в корзину.", "error");
+      return;
+    }
+
+    if (!validation.validate()) {
+      //Чтобы не уписывать пользователя в молчание, показываем общий текст.
+      Dom.setMessage(
+        orderMessage,
+        "Проверьте выделенные поля и отправьте заказ ещё раз.",
+        "error"
+      );
+      return;
+    }
+
+    const name = orderForm.querySelector("#customer-name").value.trim();
+
+    Dom.setMessage(
+      orderMessage,
+      `Спасибо, ${name}! Заказ успешно оформлен.`,
+      "success"
+    );
+
+    Cart.clear();
+    orderForm.reset();
+    validation.clear();
+  });
+
+  //Показываем сохранённую корзину при открытии страницы.
   renderCart();
-});
-
-// Показываем корзину при открытии страницы
-renderCart();
-
-
-
-const orderForm = document.querySelector("#order-form");
-const orderMessage = document.querySelector("#order-message");
-
-orderForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-
-  const cart = getCart();
-
-  if (cart.length === 0) {
-    orderMessage.textContent = "Добавьте товары в корзину.";
-    return;
-  }
-
-  if (!orderForm.checkValidity()) {
-    orderForm.reportValidity();
-    return;
-  }
-
-  const customerName = document
-    .querySelector("#customer-name")
-    .value
-    .trim();
-
-  orderMessage.textContent =
-    `Спасибо, ${customerName}! Заказ успешно оформлен.`;
-
-  saveCart([]);
-  renderCart();
-  orderForm.reset();
-});
-
+})();

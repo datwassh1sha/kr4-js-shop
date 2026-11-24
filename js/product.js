@@ -1,141 +1,133 @@
-const params = new URLSearchParams(window.location.search);
-const productId = params.get("id");
-const product = products[productId];
+/*
+  Страница товара.
 
-const productDetails = document.querySelector("#product-details");
-const productSpecifications = document.querySelector(
-  "#product-specifications",
-);
-const productNotFound = document.querySelector("#product-not-found");
+  Данные берутся из js/products.js, поэтому одна страница product.html
+  показывает любой товар по ссылке product.html?id=….
 
-if (!product) {
-  productDetails.hidden = true;
-  productSpecifications.hidden = true;
-  productNotFound.hidden = false;
+  Ошибки и служебные сообщения выводятся текстом в блоки страницы,
+  без alert() и без вставки HTML из строк.
+*/
 
-  document.querySelector("#breadcrumb-product").textContent =
-    "Товар не найден";
+(() => {
+  const params = new URLSearchParams(window.location.search);
+  const productId = params.get("id");
+  const product = Object.prototype.hasOwnProperty.call(products, productId)
+    ? products[productId]
+    : null;
 
-  document.title = "Товар не найден | Hot Wheels Deals";
-} else {
-  // Название и изображение
-  document.querySelector("#product-title").textContent = product.title;
+  const detailsSection = document.querySelector("#product-details");
+  const specsSection = document.querySelector("#product-specifications");
+  const notFoundSection = document.querySelector("#product-not-found");
+  const breadcrumb = document.querySelector("#breadcrumb-product");
+  const cartMessage = document.querySelector("#cart-message");
+  const addButton = document.querySelector("#add-to-cart");
 
   /*
-    Главное изображение товара.
-    Собираем srcset из подготовленных размеров и указываем sizes:
-    на широких экранах картинка занимает около 55vw, на планшетах
-    и телефонах — всю ширину блока.
+    Товара нет — показываем пустое состояние вместо карточки.
+  */
+  if (!product) {
+    detailsSection.hidden = true;
+    specsSection.hidden = true;
+    notFoundSection.hidden = false;
+
+    breadcrumb.textContent = "Товар не найден";
+    document.title = "Товар не найден | Hot Wheels Deals";
+
+    return;
+  }
+
+  /*
+    Заголовок, крошки и название вкладки.
+  */
+  document.title = `${product.title} | Hot Wheels Deals`;
+  breadcrumb.textContent = product.title;
+
+  /*
+    Главное изображение: srcset собирается из подготовленных размеров.
   */
   const image = document.querySelector("#product-image");
 
   if (product.imageSet) {
     const { path, ext, widths } = product.imageSet;
 
-    image.srcset = widths
-      .map((w) => `${path}-${w}.${ext} ${w}w`)
-      .join(", ");
-
+    image.srcset = widths.map((width) => `${path}-${width}.${ext} ${width}w`).join(", ");
     image.sizes = "(max-width: 991px) 92vw, 50vw";
   }
 
   image.src = product.image;
   image.alt = product.imageAlt;
+  image.width = product.imageWidth;
+  image.height = product.imageHeight;
 
-  if (product.imageWidth) {
-    image.width = product.imageWidth;
-    image.height = product.imageHeight;
-  }
-
-  // Описание и цена
+  /*
+    Текстовые блоки — только через textContent.
+  */
+  document.querySelector("#product-title").textContent = product.title;
   document.querySelector("#product-short-description").textContent =
     product.shortDescription;
-
   document.querySelector("#product-description").textContent =
     product.description;
+  document.querySelector("#product-price").textContent = Dom.formatPrice(
+    product.price
+  );
 
-  document.querySelector("#product-price").textContent =
-    `${product.price.toLocaleString("ru-RU")} ₽`;
+  /*
+    Бейдж: подпись и класс оформления зависят от данных товара.
+  */
+  const badge = document.querySelector("#product-badge");
+  const badgeModifiers = {
+    Новинка: "product-card__badge--new",
+    Хит: "product-card__badge--hit",
+    Лимитка: "product-card__badge--limited",
+  };
 
-  // Хлебные крошки и заголовок вкладки
-  document.querySelector("#breadcrumb-product").textContent = product.title;
-  document.title = `${product.title} | Hot Wheels Deals`;
+  badge.classList.remove(
+    "product-card__badge--new",
+    "product-card__badge--hit",
+    "product-card__badge--limited"
+  );
 
-  // Характеристики
+  badge.textContent = product.badge || "";
+  badge.hidden = !product.badge;
+
+  if (product.badge && badgeModifiers[product.badge]) {
+    badge.classList.add(badgeModifiers[product.badge]);
+  }
+
+  /*
+    Характеристики.
+  */
   document.querySelector("#product-manufacturer").textContent =
     product.manufacturer;
-
   document.querySelector("#product-scale").textContent = product.scale;
   document.querySelector("#product-material").textContent = product.material;
   document.querySelector("#product-series").textContent = product.series;
 
-// Бейдж товара
-const badge = document.querySelector("#product-badge");
-
-badge.textContent = product.badge || "";
-badge.hidden = !product.badge;
-
-badge.classList.remove(
-  "product-card__badge--new",
-  "product-card__badge--limited",
-  "product-card__badge--hit",
-);
-
-if (product.badge === "Новинка") {
-  badge.classList.add("product-card__badge--new");
-} else if (product.badge === "Лимитка") {
-  badge.classList.add("product-card__badge--limited");
-} else if (product.badge === "Хит") {
-  badge.classList.add("product-card__badge--hit");
-}
-
-  // Наличие
+  /*
+    Наличие и состояние кнопки.
+  */
   const status = document.querySelector("#product-status");
 
-  if (product.available) {
-    status.className = "product-status product-status--available";
-    status.textContent = "● В наличии";
-  } else {
-    status.className = "product-status product-status--unavailable";
-    status.textContent = "● Нет в наличии";
-  }
-}
+  status.classList.toggle("product-status--available", product.available);
+  status.classList.toggle("product-status--unavailable", !product.available);
+  status.textContent = product.available ? "● В наличии" : "● Нет в наличии";
 
-// Добавление товара в корзину
-const addToCartButton = document.querySelector("#add-to-cart");
-const cartMessage = document.querySelector("#cart-message");
-
-// Блок товара показывается только тогда, когда товар найден.
-if (product) {
-  addToCartButton.disabled = !product.available;
+  addButton.disabled = !product.available;
 
   if (!product.available) {
-    addToCartButton.textContent = "Нет в наличии";
+    addButton.textContent = "Нет в наличии";
   }
 
-  addToCartButton.addEventListener("click", () => {
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  /*
+    Добавление в корзину.
+  */
+  addButton.addEventListener("click", () => {
+    const quantity = Cart.add(productId, product);
 
-    const existingProduct = cart.find((item) => item.id === productId);
-
-    if (existingProduct) {
-      existingProduct.quantity += 1;
-    } else {
-      cart.push({
-        id: productId,
-        title: product.title,
-        price: product.price,
-        /*
-          В корзине картинка показывается маленькой, поэтому кладём
-          уменьшенный вариант, а не крупный файл основного изображения.
-        */
-        image: product.imageThumb || product.image,
-        quantity: 1,
-      });
-    }
-
-    localStorage.setItem("cart", JSON.stringify(cart));
-    window.dispatchEvent(new Event("cartUpdated"));
-    cartMessage.textContent = "Товар добавлен в корзину!";
+    Dom.setMessage(
+      cartMessage,
+      `«${product.title}» добавлен в корзину. В корзине: ${quantity} шт.`,
+      "success"
+    );
   });
-}
+})();

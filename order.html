@@ -54,7 +54,7 @@
           Очистить корзину
         </button>
 
-        <form id="order-form">
+        <form id="order-form" novalidate>
           <h2>Оформление заказа</h2>
 
           <div class="order-form__field">
@@ -65,6 +65,8 @@
               id="customer-name"
               name="name"
               placeholder="Введите ваше имя"
+              minlength="2"
+              autocomplete="name"
               required
             />
           </div>
@@ -79,6 +81,7 @@
               id="customer-email"
               name="email"
               placeholder="example@mail.com"
+              autocomplete="email"
               required
             />
           </div>
@@ -93,6 +96,8 @@
               name="address"
               rows="3"
               placeholder="Город, улица, дом, квартира"
+              minlength="5"
+              autocomplete="street-address"
               required
             ></textarea>
           </div>
@@ -100,7 +105,15 @@
           <button class="button" type="submit">Подтвердить заказ</button>
         </form>
       </div>
-      <p id="order-message" role="status" aria-live="polite"></p>
+
+      <!-- Сообщения выводятся текстом: alert() в проекте не используется -->
+      <p
+        class="message"
+        id="order-message"
+        role="status"
+        aria-live="polite"
+        hidden
+      ></p>
     </main>
 
     <footer>
@@ -108,7 +121,10 @@
       <p>Дисциплина: Фронтенд и бэкенд разработка</p>
     </footer>
 
-    <script src="js/order.js"></script>
+    <script src="js/dom.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/validation.js"></script>
     <script src="js/cart-counter.js"></script>
+    <script src="js/order.js"></script>
   </body>
 </html>

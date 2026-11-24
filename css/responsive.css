@@ -173,6 +173,30 @@
   }
 }
 
+/* Каталог: сообщения и итоги подбора растянуты на всю ширину */
+@media (max-width: 767px) {
+  .catalog-products__count,
+  .catalog-products .message,
+  .catalog-empty {
+    font-size: 0.9rem;
+  }
+
+  .catalog-empty p {
+    max-width: none;
+  }
+}
+
+/* Модальное окно заявки: сообщения растянуты на всю ширину */
+@media (max-width: 767px) {
+  .order-dialog .message {
+    margin-top: var(--space-md);
+  }
+
+  .order-dialog__product {
+    font-size: 0.95rem;
+  }
+}
+
 /* Мероприятия: карточки по одной и заголовок над стрелками */
 @media (max-width: 767px) {
   .events__header {
@@ -358,8 +382,21 @@
 /* Корзина: кнопки на всю ширину и перестройка позиции */
 @media (max-width: 575px) {
   #cart-summary .button,
-  #order-form button[type="submit"] {
+  #order-form button[type="submit"],
+  #catalog-empty .button {
     width: 100%;
+  }
+
+  /*
+    Поиск и фильтры: сообщения под полем не выходят за пределы колонки.
+    Подпись «Найдено … товаров» остаётся одна строка, переносится как нужен.
+  */
+  .catalog-products__count {
+    overflow-wrap: anywhere;
+  }
+
+  .filters-form__actions {
+    gap: var(--space-xs);
   }
 
   .cart-item {
